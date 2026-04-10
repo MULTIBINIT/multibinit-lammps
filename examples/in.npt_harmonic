@@ -1,0 +1,54 @@
+# NPT test - verify pressure relaxation (harmonic only for stability)
+# BaHfO3 with Multibinit potential
+
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+
+variable a equal 4.1490
+variable T_target equal 300.0
+variable P_target equal 0.0  # 0 pressure
+
+lattice custom ${a} &
+  a1 1.0 0.0 0.0 &
+  a2 0.0 1.0 0.0 &
+  a3 0.0 0.0 1.0 &
+  basis 0.0 0.0 0.0 &
+  basis 0.5 0.5 0.5 &
+  basis 0.5 0.5 0.0 &
+  basis 0.0 0.5 0.5 &
+  basis 0.5 0.0 0.5
+
+region supercell block 0 2 0 2 0 2
+create_box 3 supercell
+create_atoms 1 box &
+  basis 1 1 &
+  basis 2 2 &
+  basis 3 3 &
+  basis 4 3 &
+  basis 5 3
+
+mass 1 137.33
+mass 2 178.49
+mass 3 16.00
+
+plugin load ../build/multibinitplugin.so
+
+# Use harmonic only (DDB) - more stable for NPT
+pair_style multibinit 2 2 2 ngqpt 2 2 2 dipdip 0
+pair_coeff * * BaHfO3.DDB
+
+# Initialize velocities at 300K
+velocity all create 300.0 12345
+
+# NPT with gentle coupling
+fix 1 all npt temp ${T_target} ${T_target} 0.1 iso ${P_target} ${P_target} 10.0
+
+# Output
+thermo 100
+thermo_style custom step temp pe ke etotal press vol
+
+# Run for 2000 steps (2 ps)
+timestep 0.001
+run 2000

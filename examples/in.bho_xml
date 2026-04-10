@@ -1,0 +1,52 @@
+# BaHfO3 MD simulation with Multibinit potential
+# Including anharmonic coefficients from XML file
+
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+
+variable a equal 4.1490
+
+lattice custom ${a} &
+  a1 1.0 0.0 0.0 &
+  a2 0.0 1.0 0.0 &
+  a3 0.0 0.0 1.0 &
+  basis 0.0 0.0 0.0 &
+  basis 0.5 0.5 0.5 &
+  basis 0.5 0.5 0.0 &
+  basis 0.0 0.5 0.5 &
+  basis 0.5 0.0 0.5
+
+region supercell block 0 2 0 2 0 2
+create_box 3 supercell
+create_atoms 1 box &
+  basis 1 1 &
+  basis 2 2 &
+  basis 3 3 &
+  basis 4 3 &
+  basis 5 3
+
+mass 1 137.33
+mass 2 178.49
+mass 3 16.00
+
+plugin load ../build/multibinitplugin.so
+
+# Include XML file with anharmonic coefficients
+pair_style multibinit 2 2 2 ngqpt 2 2 2 dipdip 0
+pair_coeff * * BaHfO3.DDB BaHfO3.xml
+
+# Initialize velocities at 300K
+velocity all create 300.0 12345
+
+# Time integration (NVE ensemble)
+fix 1 all nve
+
+# Output settings
+thermo 10
+thermo_style custom step temp pe ke etotal press vol
+
+# Run 100 steps
+timestep 0.001
+run 100

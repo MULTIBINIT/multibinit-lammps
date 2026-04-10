@@ -1,0 +1,60 @@
+# LAMMPS test input for Multibinit pair style
+# BaHfO3 perovskite - 2x2x2 supercell (40 atoms)
+# Based on tmulti_l_6_DDB test from ABINIT
+
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+
+# BaHfO3 primitive cell from tmulti_l_6_DDB:
+# Lattice: 7.841119594 Bohr = 4.1490 Angstrom
+# Atoms in fractional coordinates:
+#   Ba  (0,0,0)
+#   Hf  (0.5,0.5,0.5)
+#   O   (0.5,0.5,0), (0,0.5,0.5), (0.5,0,0.5)
+
+variable a equal 4.1490
+
+# Define the primitive perovskite lattice
+lattice custom ${a} &
+  a1 1.0 0.0 0.0 &
+  a2 0.0 1.0 0.0 &
+  a3 0.0 0.0 1.0 &
+  basis 0.0 0.0 0.0 &
+  basis 0.5 0.5 0.5 &
+  basis 0.5 0.5 0.0 &
+  basis 0.0 0.5 0.5 &
+  basis 0.5 0.0 0.5
+
+# Create a 2x2x2 supercell (40 atoms total)
+region supercell block 0 2 0 2 0 2
+create_box 3 supercell
+create_atoms 1 box &
+  basis 1 1 &
+  basis 2 2 &
+  basis 3 3 &
+  basis 4 3 &
+  basis 5 3
+
+# Set masses (from tmulti_l_6_DDB)
+mass 1 137.33  # Ba
+mass 2 178.49  # Hf
+mass 3 16.00   # O
+
+# Load the plugin
+plugin load ../build/multibinitplugin.so
+
+# Define Multibinit pair style
+# ncell 2 2 2 defines the supercell repetition
+# dipdip 0 to disable dipole-dipole (workaround for Ewald bug)
+# No coefficient file - just test harmonic part
+pair_style multibinit 2 2 2 ngqpt 2 2 2 dipdip 0
+pair_coeff * * BaHfO3.DDB
+
+# Output settings
+thermo 1
+thermo_style custom step temp pe ke etotal press vol atoms
+
+# Run a single step to test compute()
+run 0

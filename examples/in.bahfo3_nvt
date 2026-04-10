@@ -1,0 +1,65 @@
+# BaHfO3 molecular dynamics with Multibinit
+# 2x2x2 supercell (40 atoms)
+# NVT ensemble (canonical, constant temperature)
+
+# ========== Units and System Setup ==========
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+
+# ========== Structure Definition ==========
+variable a equal 4.1490
+
+lattice custom ${a} &
+    a1 1.0 0.0 0.0 &
+    a2 0.0 1.0 0.0 &
+    a3 0.0 0.0 1.0 &
+    basis 0.0 0.0 0.0 &
+    basis 0.5 0.5 0.5 &
+    basis 0.5 0.5 0.0 &
+    basis 0.0 0.5 0.5 &
+    basis 0.5 0.0 0.5
+
+region box block 0 2 0 2 0 2
+create_box 3 box
+create_atoms 1 box &
+    basis 1 1 &
+    basis 2 2 &
+    basis 3 3 &
+    basis 4 3 &
+    basis 5 3
+
+mass 1 137.33  # Ba
+mass 2 178.49  # Hf
+mass 3 16.00   # O
+
+# ========== Plugin and Potential ==========
+plugin load ../build/multibinitplugin.so
+
+pair_style multibinit 2 2 2 ngqpt 2 2 2 dipdip 1
+pair_coeff * * ../tests/BaHfO3.DDB ../tests/BaHfO3_coeffs.xml
+
+# ========== Output Settings ==========
+thermo 50
+thermo_style custom step temp pe ke etotal press vol density
+
+# ========== Trajectory Output ==========
+dump 1 all atom 100 bahfo3_nvt.lammpstrj id type x y z
+
+# ========== Dynamics ==========
+timestep 0.001
+
+# Initialize velocities at 300K
+velocity all create 300.0 54321
+
+# NVT ensemble with Nosé-Hoover thermostat
+# Tdamp = 0.1 ps (100 fs) - typical for solid-state
+fix 1 all nvt temp 300.0 300.0 0.1
+
+# Equilibrate for 2000 steps (2 ps)
+run 2000
+
+# Production run
+reset_timestep 0
+run 5000
