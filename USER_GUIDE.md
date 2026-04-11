@@ -363,17 +363,6 @@ thermo_style custom step temp c_msd[4]
 
 **Solution**: Ensure lattice parameter and supercell match the DDB file.
 
-#### "MPI hang with XML coefficients"
-
-**Cause**: Known issue with collective MPI operations in XML reading.
-
-**Solution**: Use only DDB file (harmonic) for MPI runs, or update to latest Fortran code.
-
-#### "Non-numeric pressure"
-
-**Cause**: Instability with anharmonic terms and barostats.
-
-**Solution**: Use harmonic potential only for NPT, or increase pressure damping.
 
 #### "Plugin not found"
 
@@ -387,8 +376,6 @@ export LD_LIBRARY_PATH=/path/to/abinit/lib:$LD_LIBRARY_PATH
 ### Performance Tips
 
 1. **Use MPI**: Parallel runs significantly faster for large systems
-2. **Timestep**: 1 fs (0.001 in metal units) is typical
-3. **Neighbor list**: Not needed (no pairwise cutoff), but warnings are harmless
 
 ---
 
